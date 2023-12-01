@@ -9,9 +9,12 @@ import (
 )
 
 func replaceSpelledDigits(s string) string {
-	digitMap := map[string]string{"one": "o1e", "two": "t2o", "three": "t3e", "four": "f4r", "five": "f5e", "six": "s6x", "seven": "s7n", "eight": "e8t", "nine": "n9e"}
-	for key, value := range digitMap {
-		s = strings.ReplaceAll(s, key, value)
+	re := regexp.MustCompile("(one|two|three|four|five|six|seven|eight|nine)")
+	if re.MatchString(s) {
+		digitMap := map[string]string{"one": "o1e", "two": "t2o", "three": "t3e", "four": "f4r", "five": "f5e", "six": "s6x", "seven": "s7n", "eight": "e8t", "nine": "n9e"}
+		for key, value := range digitMap {
+			s = strings.ReplaceAll(s, key, value)
+		}
 	}
 	return s
 }
