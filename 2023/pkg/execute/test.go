@@ -21,14 +21,14 @@ func (t TestCases) Run(fn func(string) (interface{}, interface{}), hideInput boo
 		passed := passedPart1 && passedPart2
 
 		if !passed && !hideInput {
-			fmt.Println("Input ", test.Input)
+			fmt.Println("Input\n", test.Input)
 		}
 		if !passedPart1 {
-			fmt.Println(" - PART1: ", part1, " but expected ", expectedPart1)
+			fmt.Println(" - PART1: Got ", part1, " but expected ", expectedPart1)
 			os.Exit(1)
 		}
 		if !passedPart2 {
-			fmt.Println(" - PART2: ", part2, " but expected ", expectedPart2)
+			fmt.Println(" - PART2: Got ", part2, " but expected ", expectedPart2)
 			os.Exit(1)
 		}
 	}
