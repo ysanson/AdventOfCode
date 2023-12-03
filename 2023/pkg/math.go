@@ -30,13 +30,13 @@ func Min(values ...int) int {
 		panic("no value in min function")
 	}
 
-	var max *nullableInt
+	var min *nullableInt
 	for _, value := range values {
-		if max == nil || max.value > value {
-			max = &nullableInt{value}
+		if min == nil || min.value > value {
+			min = &nullableInt{value}
 		}
 	}
-	return max.value
+	return min.value
 }
 
 func Sum(values ...int) int {
