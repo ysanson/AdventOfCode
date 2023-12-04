@@ -10,24 +10,20 @@ import (
 
 func getWinningNumbers(game string) []int {
 	winning := game[strings.IndexRune(game, ':')+1 : strings.IndexRune(game, '|')]
-	numbers := strings.Split(winning, " ")
-	var nums []int
-	for _, number := range numbers {
-		if number != "" {
-			nums = append(nums, pkg.MustAtoi(number))
-		}
+	numbers := strings.Split(strings.TrimSpace(winning), " ")
+	nums := make([]int, len(numbers))
+	for idx, number := range numbers {
+		nums[idx] = pkg.MustAtoi(number)
 	}
 	return nums
 }
 
 func getCardNumbers(game string) []int {
 	extract := game[strings.IndexRune(game, '|')+1:]
-	numbers := strings.Split(extract, " ")
-	var nums []int
-	for _, number := range numbers {
-		if number != "" {
-			nums = append(nums, pkg.MustAtoi(number))
-		}
+	numbers := strings.Split(strings.TrimSpace(extract), " ")
+	nums := make([]int, len(numbers))
+	for idx, number := range numbers {
+		nums[idx] = pkg.MustAtoi(number)
 	}
 	return nums
 }
@@ -52,13 +48,10 @@ func run(input string) (interface{}, interface{}) {
 	var expectedNumbers, gameNumbers []int
 	winningNumbers := 0
 
-	copies := make(map[int]int)
-	for i := 0; i < len(lines); i++ {
-		copies[i] = 1
-	}
+	copies := pkg.CreateSlice(len(lines), 1)
 
 	for index, line := range lines {
-		expectedNumbers, gameNumbers = getNumbers(line)
+		expectedNumbers, gameNumbers = getNumbers(pkg.StandardizeSpaces(line))
 		winningNumbers = countWinningNumbers(expectedNumbers, gameNumbers)
 		for j := 0; j < winningNumbers; j++ {
 			if index+j < len(lines) {
@@ -71,10 +64,8 @@ func run(input string) (interface{}, interface{}) {
 
 	}
 
-	part2 := 0
-	for _, copy := range copies {
-		part2 += copy
-	}
+	part2 := pkg.Reduce(copies, func(acc, current int) int { return acc + current }, 0)
+
 	return part1, part2
 }
 

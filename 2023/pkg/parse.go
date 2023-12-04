@@ -11,6 +11,10 @@ func GetChar(str string, index int) rune {
 	return []rune(str)[index]
 }
 
+func StandardizeSpaces(s string) string {
+	return strings.Join(strings.Fields(s), " ")
+}
+
 func ReplaceAllStringSubmatchFunc(re *regexp.Regexp, str string, repl func([]string) string) string {
 	result := ""
 	lastIndex := 0
