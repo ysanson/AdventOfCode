@@ -8,6 +8,11 @@ import (
 	"github.com/ysanson/AdventOfCode/2023/pkg/execute"
 )
 
+func getGameId(input string) int {
+	game := input[strings.IndexRune(input, ' ')+1 : strings.IndexRune(input, ':')]
+	return pkg.MustAtoi(game)
+}
+
 func replaceSpelledDigits(s string) string {
 	re := regexp.MustCompile("(one|two|three|four|five|six|seven|eight|nine)")
 	if re.MatchString(s) {
