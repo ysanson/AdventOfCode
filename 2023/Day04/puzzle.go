@@ -8,11 +8,11 @@ var Tests = execute.TestCases{
 		ExpectedPart1: 13,
 		ExpectedPart2: 30,
 	},
-	// {
-	// 	Input:         Puzzle,
-	// 	ExpectedPart1: 517021,
-	// 	ExpectedPart2: 81296995,
-	// },
+	{
+		Input:         Puzzle,
+		ExpectedPart1: 21158,
+		ExpectedPart2: 6050769,
+	},
 }
 
 const Test1 = `Card 1: 41 48 83 86 17 | 83 86  6 31 17  9 48 53

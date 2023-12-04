@@ -8,13 +8,6 @@ import (
 	"github.com/ysanson/AdventOfCode/2023/pkg/execute"
 )
 
-var lookupPoints = []int{0, 1, 2, 4, 8, 16, 32, 64, 128, 256, 512}
-
-func getCardId(input string) int {
-	game := input[strings.IndexRune(input, ' ')+1 : strings.IndexRune(input, ':')]
-	return pkg.MustAtoi(game)
-}
-
 func getWinningNumbers(game string) []int {
 	winning := game[strings.IndexRune(game, ':')+1 : strings.IndexRune(game, '|')]
 	numbers := strings.Split(winning, " ")
@@ -72,7 +65,10 @@ func run(input string) (interface{}, interface{}) {
 				copies[index+j+1] += copies[index]
 			}
 		}
-		part1 += lookupPoints[winningNumbers]
+		if winningNumbers > 0 {
+			part1 += 1 << (winningNumbers - 1)
+		}
+
 	}
 
 	part2 := 0
