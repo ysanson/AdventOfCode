@@ -8,30 +8,16 @@ import (
 	"github.com/ysanson/AdventOfCode/2023/pkg/execute"
 )
 
-func getChar(str string, index int) rune {
-	return []rune(str)[index]
-}
-
-func sanitizeIndex(index int, maxIndex int) int {
-	if index < 0 {
-		return 0
-	} else if index >= maxIndex {
-		return maxIndex - 1
-	} else {
-		return index
-	}
-}
-
-func getCharsAroundNumberRec(lineBefore string, currentLine string, lineAfter string, startIndex int, length int, surroundingChars string) string {
+func getCharsAroundNumberRec(lineBefore string, currentLine string, lineAfter string, index int, length int, surroundingChars string) string {
 	maxLength := len(currentLine)
 	if length == 0 {
 		// Check right hand
 		if lineBefore != "" {
-			surroundingChars += string(getChar(lineBefore, sanitizeIndex(startIndex, maxLength)))
+			surroundingChars += string(pkg.GetChar(lineBefore, pkg.SanitizeIndex(index, maxLength)))
 		}
-		surroundingChars += string(getChar(currentLine, sanitizeIndex(startIndex, maxLength)))
+		surroundingChars += string(pkg.GetChar(currentLine, pkg.SanitizeIndex(index, maxLength)))
 		if lineAfter != "" {
-			surroundingChars += string(getChar(lineAfter, sanitizeIndex(startIndex, maxLength)))
+			surroundingChars += string(pkg.GetChar(lineAfter, pkg.SanitizeIndex(index, maxLength)))
 		}
 		return surroundingChars
 	}
@@ -39,23 +25,23 @@ func getCharsAroundNumberRec(lineBefore string, currentLine string, lineAfter st
 	if surroundingChars == "" {
 		// Check left hand
 		if lineBefore != "" {
-			surroundingChars += string(getChar(lineBefore, sanitizeIndex(startIndex-1, maxLength)))
+			surroundingChars += string(pkg.GetChar(lineBefore, pkg.SanitizeIndex(index-1, maxLength)))
 		}
-		surroundingChars += string(getChar(currentLine, sanitizeIndex(startIndex-1, maxLength)))
+		surroundingChars += string(pkg.GetChar(currentLine, pkg.SanitizeIndex(index-1, maxLength)))
 		if lineAfter != "" {
-			surroundingChars += string(getChar(lineAfter, sanitizeIndex(startIndex-1, maxLength)))
+			surroundingChars += string(pkg.GetChar(lineAfter, pkg.SanitizeIndex(index-1, maxLength)))
 		}
 	}
 
 	// Check up and down the number
 	if lineBefore != "" {
-		surroundingChars += string(getChar(lineBefore, startIndex))
+		surroundingChars += string(pkg.GetChar(lineBefore, index))
 	}
 	if lineAfter != "" {
-		surroundingChars += string(getChar(lineAfter, startIndex))
+		surroundingChars += string(pkg.GetChar(lineAfter, index))
 	}
 
-	return getCharsAroundNumberRec(lineBefore, currentLine, lineAfter, startIndex+1, length-1, surroundingChars)
+	return getCharsAroundNumberRec(lineBefore, currentLine, lineAfter, index+1, length-1, surroundingChars)
 }
 
 func analyzeLine(lineBefore string, currentLine string, lineAfter string) int {

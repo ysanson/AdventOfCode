@@ -7,6 +7,10 @@ import (
 	"strings"
 )
 
+func GetChar(str string, index int) rune {
+	return []rune(str)[index]
+}
+
 func ReplaceAllStringSubmatchFunc(re *regexp.Regexp, str string, repl func([]string) string) string {
 	result := ""
 	lastIndex := 0

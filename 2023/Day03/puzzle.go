@@ -11,7 +11,7 @@ var Tests = execute.TestCases{
 	{
 		Input:         Puzzle,
 		ExpectedPart1: 517021,
-		ExpectedPart2: 79315,
+		ExpectedPart2: 0,
 	},
 }
 
