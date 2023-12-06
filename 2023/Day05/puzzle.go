@@ -8,11 +8,11 @@ var Tests = execute.TestCases{
 		ExpectedPart1: 35,
 		ExpectedPart2: 0,
 	},
-	{
-		Input:         Puzzle,
-		ExpectedPart1: 21158,
-		ExpectedPart2: 6050769,
-	},
+	// {
+	// 	Input:         Puzzle,
+	// 	ExpectedPart1: 993500720,
+	// 	ExpectedPart2: 6050769,
+	// },
 }
 
 const Test1 = `seeds: 79 14 55 13

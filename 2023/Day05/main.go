@@ -1,10 +1,8 @@
 package main
 
 import (
-	"math"
 	"regexp"
 	"slices"
-	"strconv"
 	"strings"
 
 	"github.com/ysanson/AdventOfCode/2023/pkg"
@@ -23,29 +21,38 @@ const (
 	HumidToLocation   LUT = "humidity-to-location map:"
 )
 
-type Tables struct {
-	seedToSoil, soilToFertilizer, fertilizerToWater, waterToLight, ligthToTemp, tempToHumid, humidToLocation map[uint64]uint64
+type Range struct {
+	from, to, difference int
 }
 
-var numRegex = regexp.MustCompile("\\d+\\s?")
+type Ranges []Range
 
-func createLookupTable(inputs []string) map[uint64]uint64 {
-	lut := make(map[uint64]uint64)
+type Tables struct {
+	seedToSoil, soilToFertilizer, fertilizerToWater, waterToLight, ligthToTemp, tempToHumid, humidToLocation Ranges
+}
+
+var numRegex = regexp.MustCompile(`\d+\s?`)
+
+func createRange(inputs []string) Ranges {
 	var parsed []string
-	var source, dest uint64
-	for _, line := range inputs {
+	var source, dest, length int
+	ranges := make([]Range, len(inputs))
+	for index, line := range inputs {
 		parsed = strings.Split(line, " ")
-		source, _ = strconv.ParseUint(parsed[0], 10, 64)
-		dest, _ = strconv.ParseUint(parsed[1], 10, 64)
-		for i := 0; i < pkg.MustAtoi(parsed[2]); i++ {
-			lut[dest+uint64(i)] = source + uint64(i)
+		source = pkg.MustAtoi(parsed[1])
+		dest = pkg.MustAtoi(parsed[0])
+		length = pkg.MustAtoi(parsed[2])
+		ranges[index] = Range{
+			from:       source,
+			to:         source + length - 1,
+			difference: dest - source,
 		}
 	}
 
-	return lut
+	return ranges
 }
 
-func extractTable(input string, header LUT) map[uint64]uint64 {
+func extractTable(input string, header LUT) Ranges {
 	start := strings.Index(input, string(header))
 	end := strings.Index(input[start:], "\n\n")
 	var data []string
@@ -58,15 +65,15 @@ func extractTable(input string, header LUT) map[uint64]uint64 {
 	data = slices.DeleteFunc(data, func(elt string) bool {
 		return !numRegex.MatchString(elt)
 	})
-	return createLookupTable(data)
+	return createRange(data)
 }
 
-func extractSeeds(input string) []uint64 {
+func extractSeeds(input string) []int {
 	seedLine := strings.Split(input, "\n")[0]
 	numbers := strings.Split(seedLine, " ")[1:]
-	seeds := make([]uint64, len(numbers))
+	seeds := make([]int, len(numbers))
 	for index, num := range numbers {
-		seeds[index], _ = strconv.ParseUint(num, 10, 64)
+		seeds[index] = pkg.MustAtoi(num)
 	}
 	return seeds
 }
@@ -83,45 +90,34 @@ func generateTables(input string) Tables {
 	return tables
 }
 
-func convertSeedToLocation(seed uint64, tables Tables) uint64 {
-	finalNumber := seed
-	if soil, prs := tables.seedToSoil[seed]; prs {
-		finalNumber = soil
+func getMatchingNumber(sourceNumber int, ranges Ranges) int {
+	for _, r := range ranges {
+		if r.from <= sourceNumber && sourceNumber <= r.to {
+			return sourceNumber + r.difference
+		}
 	}
-	if fertilizer, prs := tables.soilToFertilizer[finalNumber]; prs {
-		finalNumber = fertilizer
-	}
-	if water, prs := tables.fertilizerToWater[finalNumber]; prs {
-		finalNumber = water
-	}
-	if light, prs := tables.waterToLight[finalNumber]; prs {
-		finalNumber = light
-	}
-	if temp, prs := tables.ligthToTemp[finalNumber]; prs {
-		finalNumber = temp
-	}
-	if humid, prs := tables.tempToHumid[finalNumber]; prs {
-		finalNumber = humid
-	}
-	if location, prs := tables.humidToLocation[finalNumber]; prs {
-		finalNumber = location
-	}
-	return finalNumber
+	return sourceNumber
+}
+
+func convertSeedToLocation(seed int, tables Tables) int {
+	finalNumber := getMatchingNumber(seed, tables.seedToSoil)
+	finalNumber = getMatchingNumber(finalNumber, tables.soilToFertilizer)
+	finalNumber = getMatchingNumber(finalNumber, tables.fertilizerToWater)
+	finalNumber = getMatchingNumber(finalNumber, tables.waterToLight)
+	finalNumber = getMatchingNumber(finalNumber, tables.ligthToTemp)
+	finalNumber = getMatchingNumber(finalNumber, tables.tempToHumid)
+	return getMatchingNumber(finalNumber, tables.humidToLocation)
 }
 
 func run(input string) (interface{}, interface{}) {
 	seeds := extractSeeds(input)
 	tables := generateTables(input)
-	var receivedLocation uint64
-	var min uint64 = math.MaxUint64
-	for _, seed := range seeds {
-		receivedLocation = convertSeedToLocation(seed, tables)
-		if receivedLocation < min {
-			min = receivedLocation
-		}
+	locations := make([]int, len(seeds))
+	for index, seed := range seeds {
+		locations[index] = convertSeedToLocation(seed, tables)
 	}
 
-	return min, 0
+	return pkg.Min(locations...), 0
 }
 
 func main() {
