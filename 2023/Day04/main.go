@@ -54,7 +54,7 @@ func run(input string) (interface{}, interface{}) {
 		expectedNumbers, gameNumbers = getNumbers(pkg.StandardizeSpaces(line))
 		winningNumbers = countWinningNumbers(expectedNumbers, gameNumbers)
 		for j := 0; j < winningNumbers; j++ {
-			if index+j < len(lines) {
+			if index+j+1 < len(lines) {
 				copies[index+j+1] += copies[index]
 			}
 		}
