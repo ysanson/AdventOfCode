@@ -5,6 +5,7 @@ import (
 	"regexp"
 	"slices"
 	"strings"
+	"sync"
 
 	"github.com/ysanson/AdventOfCode/2023/pkg"
 	"github.com/ysanson/AdventOfCode/2023/pkg/execute"
@@ -127,6 +128,19 @@ func convertSeedToLocation(seed int, tables Tables) int {
 	return getMatchingNumber(finalNumber, tables.humidToLocation)
 }
 
+func analyzeSeedRange(seedRange Range, tables Tables, c chan int, wg *sync.WaitGroup) {
+	defer wg.Done()
+	var location int
+	minLocation := math.MaxInt
+	for i := seedRange.from; i < seedRange.to; i++ {
+		location = convertSeedToLocation(i, tables)
+		if location < minLocation {
+			minLocation = location
+		}
+	}
+	c <- minLocation
+}
+
 func run(input string) (interface{}, interface{}) {
 	P1seeds := extractSeeds(input)
 	tables := generateTables(input)
@@ -136,18 +150,25 @@ func run(input string) (interface{}, interface{}) {
 	}
 
 	seedPairs := extractSeedRanges(input)
-	minLocation := math.MaxInt
-	var location int
+	var wg sync.WaitGroup
+	ch := make(chan int)
+	p2Locations := make([]int, 0, len(seedPairs))
+
 	for _, seedRange := range seedPairs {
-		for i := seedRange.from; i < seedRange.to; i++ {
-			location = convertSeedToLocation(i, tables)
-			if location < minLocation {
-				minLocation = location
-			}
-		}
+		wg.Add(1)
+		go analyzeSeedRange(seedRange, tables, ch, &wg)
 	}
 
-	return pkg.Min(P1locations...), minLocation
+	go func() {
+		wg.Wait()
+		close(ch)
+	}()
+
+	for i := range ch {
+		p2Locations = append(p2Locations, i)
+	}
+
+	return pkg.Min(P1locations...), pkg.Min(p2Locations...)
 }
 
 func main() {
