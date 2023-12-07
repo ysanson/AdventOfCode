@@ -1,6 +1,7 @@
 package main
 
 import (
+	"math"
 	"regexp"
 	"slices"
 	"strings"
@@ -78,6 +79,23 @@ func extractSeeds(input string) []int {
 	return seeds
 }
 
+func extractSeedRanges(input string) Ranges {
+	seedLine := strings.Split(input, "\n")[0]
+	numbers := strings.Split(seedLine, " ")[1:]
+	ranges := make(Ranges, 0, len(numbers)/2)
+	var from, length int
+	for i := 0; i < len(numbers); i += 2 {
+		from = pkg.MustAtoi(numbers[i])
+		length = pkg.MustAtoi(numbers[i+1])
+		ranges = append(ranges, Range{
+			from:       from,
+			to:         from + length,
+			difference: 0,
+		})
+	}
+	return ranges
+}
+
 func generateTables(input string) Tables {
 	var tables Tables
 	tables.seedToSoil = extractTable(input, SeedToSoil)
@@ -110,14 +128,26 @@ func convertSeedToLocation(seed int, tables Tables) int {
 }
 
 func run(input string) (interface{}, interface{}) {
-	seeds := extractSeeds(input)
+	P1seeds := extractSeeds(input)
 	tables := generateTables(input)
-	locations := make([]int, len(seeds))
-	for index, seed := range seeds {
-		locations[index] = convertSeedToLocation(seed, tables)
+	P1locations := make([]int, len(P1seeds))
+	for index, seed := range P1seeds {
+		P1locations[index] = convertSeedToLocation(seed, tables)
 	}
 
-	return pkg.Min(locations...), 0
+	seedPairs := extractSeedRanges(input)
+	minLocation := math.MaxInt
+	var location int
+	for _, seedRange := range seedPairs {
+		for i := seedRange.from; i < seedRange.to; i++ {
+			location = convertSeedToLocation(i, tables)
+			if location < minLocation {
+				minLocation = location
+			}
+		}
+	}
+
+	return pkg.Min(P1locations...), minLocation
 }
 
 func main() {
