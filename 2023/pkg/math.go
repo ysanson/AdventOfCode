@@ -73,3 +73,12 @@ func GCD(a, b int) int {
 func LCM(a, b int) int {
 	return a / GCD(a, b) * b
 }
+
+func LcmAll(a int, bs ...int) int {
+	result := a
+	for _, b := range bs {
+		result = LCM(result, b)
+	}
+
+	return result
+}

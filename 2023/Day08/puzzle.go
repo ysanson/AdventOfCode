@@ -5,19 +5,24 @@ import "github.com/ysanson/AdventOfCode/2023/pkg/execute"
 var Tests = execute.TestCases{
 	{
 		Input:         Test1,
-		ExpectedPart1: 6440,
-		ExpectedPart2: 5905,
+		ExpectedPart1: 2,
+		ExpectedPart2: 2,
 	},
 	{
 		Input:         Test2,
-		ExpectedPart1: 1343,
-		ExpectedPart2: 1369,
+		ExpectedPart1: 6,
+		ExpectedPart2: 6,
 	},
-	// {
-	// 	Input:         Puzzle,
-	// 	ExpectedPart1: 993500720,
-	// 	ExpectedPart2: 6050769,
-	// },
+	{
+		Input:         Test3,
+		ExpectedPart1: -1,
+		ExpectedPart2: 6,
+	},
+	{
+		Input:         Puzzle,
+		ExpectedPart1: 20777,
+		ExpectedPart2: 13289612809129,
+	},
 }
 
 const Test1 = `RL
@@ -35,6 +40,17 @@ const Test2 = `LLR
 AAA = (BBB, BBB)
 BBB = (AAA, ZZZ)
 ZZZ = (ZZZ, ZZZ)`
+
+const Test3 = `LR
+
+11A = (11B, XXX)
+11B = (XXX, 11Z)
+11Z = (11B, XXX)
+22A = (22B, XXX)
+22B = (22C, 22C)
+22C = (22Z, 22Z)
+22Z = (22B, 22B)
+XXX = (XXX, XXX)`
 
 const Puzzle = `LLRLLRLRLRRRLLRRRLRRLRLRLRLRLRLRRLRRRLRLLRRLRRLRRRLLRLLRRLLRRRLLLRLRRRLLLLRRRLLRRRLRRLRLLRLRLRRRLRRRLRRLRRLRRLRLLRRRLRRLRRRLLRRRLRLRRLLRRLLRLRLRRLRRLLRLLRRLRLLRRRLLRRRLRRLLRRLRRRLRLRRRLRRLLLRLLRLLRRRLRLRLRLRRLRRRLLLRRRLRRRLRRRLRRLRLRLRLRRRLRRLLRLRRRLRLRLRRLLLRRRR
 
