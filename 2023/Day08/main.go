@@ -2,69 +2,74 @@ package main
 
 import (
 	"strings"
+	"sync"
 
 	"github.com/ysanson/AdventOfCode/2023/pkg"
 	"github.com/ysanson/AdventOfCode/2023/pkg/execute"
 )
 
 type Node struct {
-	name  string
 	left  string
 	right string
 }
 
-func buildNode(nodeDefinition string) Node {
-	split := strings.Split(nodeDefinition, " = ")
-	return Node{
-		name:  split[0],
-		left:  split[1][1:4],
-		right: split[1][6:9],
-	}
-}
-
 func buildNetwork(input string) map[string]Node {
 	nodeDefinitions := strings.Split(input, "\n")[2:]
-	var node Node
 	nodes := make(map[string]Node, len(nodeDefinitions))
 	for _, nodeDefinition := range nodeDefinitions {
-		node = buildNode(nodeDefinition)
-		nodes[node.name] = node
+		split := strings.Split(nodeDefinition, " = ")
+		nodes[split[0]] = Node{
+			left:  split[1][1:4],
+			right: split[1][6:9],
+		}
 	}
 	return nodes
 }
 
-func traverseGraph(graph map[string]Node, instructions string, currentName string, goal string, steps int) int {
-	if strings.HasSuffix(currentName, goal) {
-		return steps
+func traverseGraph(graph map[string]Node, instructions string, start string, goal string, c chan int, wg *sync.WaitGroup) {
+	defer wg.Done()
+	steps := 0
+	nodeName := start
+	for !strings.HasSuffix(nodeName, goal) {
+		if nodeName == graph[nodeName].left && nodeName == graph[nodeName].right {
+			c <- -1
+			return
+		}
+		if instructions[steps%len(instructions)] == 'L' {
+			nodeName = graph[nodeName].left
+		} else {
+			nodeName = graph[nodeName].right
+		}
+		steps++
 	}
-	currentNode := graph[currentName]
-	if currentNode.name == currentNode.right && currentNode.name == currentNode.left {
-		return -1
-	}
-	currentInstruction := instructions[steps%len(instructions)]
-	var nextNodeName string
-	if currentInstruction == 'L' {
-		nextNodeName = currentNode.left
-	} else {
-		nextNodeName = currentNode.right
-	}
-
-	return traverseGraph(graph, instructions, nextNodeName, goal, steps+1)
+	c <- steps
 }
 
 func run(input string) (any, any) {
 	instructions := strings.Split(input, "\n")[0]
 	network := buildNetwork(input)
-	part1 := traverseGraph(network, instructions, "AAA", "ZZZ", 0)
-	paths := make([]int, 0, 10)
-	for _, node := range network {
-		if node.name[2] == 'A' {
-			length := traverseGraph(network, instructions, node.name, "Z", 0)
-			paths = append(paths, length)
+	var wg sync.WaitGroup
+
+	chan1 := make(chan int, 1)
+	chan2 := make(chan int)
+	wg.Add(1)
+	go traverseGraph(network, instructions, "AAA", "ZZZ", chan1, &wg)
+	for key := range network {
+		if key[2] == 'A' {
+			wg.Add(1)
+			go traverseGraph(network, instructions, key, "Z", chan2, &wg)
 		}
 	}
-	part2 := pkg.LcmAll(paths[0], paths[1:]...)
-	return part1, part2
+	go func() {
+		wg.Wait()
+		close(chan1)
+		close(chan2)
+	}()
+	part2 := <-chan2
+	for i := range chan2 {
+		part2 = pkg.LCM(part2, i)
+	}
+	return <-chan1, part2
 }
 
 func main() {
