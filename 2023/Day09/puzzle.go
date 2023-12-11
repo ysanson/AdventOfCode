@@ -5,7 +5,7 @@ import "github.com/ysanson/AdventOfCode/2023/pkg/execute"
 var Tests = execute.TestCases{
 	{
 		Input:         Test1,
-		ExpectedPart1: 2,
+		ExpectedPart1: 114,
 		ExpectedPart2: 2,
 	},
 	// {

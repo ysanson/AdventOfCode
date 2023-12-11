@@ -25,3 +25,17 @@ func CreateSlice[T any](len int, defaultValue T) []T {
 	}
 	return arr
 }
+
+func IsSameElement[T comparable](slice []T) bool {
+	if len(slice) == 0 {
+		return true
+	} else {
+		firstElt := slice[0]
+		for _, elt := range slice {
+			if elt != firstElt {
+				return false
+			}
+		}
+		return true
+	}
+}
