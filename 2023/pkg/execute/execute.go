@@ -2,7 +2,11 @@ package execute
 
 import (
 	"fmt"
+	"os"
 	"time"
+
+	"github.com/faiface/pixel/pixelgl"
+	"github.com/ysanson/AdventOfCode/2023/pkg/twod"
 )
 
 func Run(run func(string) (interface{}, interface{}), test TestCases, puzzle string, verbose bool) {
@@ -18,4 +22,15 @@ func Run(run func(string) (interface{}, interface{}), test TestCases, puzzle str
 		fmt.Printf("Execution took %s", elapsed)
 	}
 
+}
+
+func RunWithPixel(run func(string) (interface{}, interface{}), tests TestCases, puzzle string, verbose bool) {
+	if os.Getenv("CI") == "true" {
+		Run(run, tests, puzzle, verbose)
+		return
+	}
+	twod.RenderingEnabled = true
+	pixelgl.Run(func() {
+		Run(run, tests, puzzle, verbose)
+	})
 }
