@@ -353,4 +353,59 @@ func hasMatch(v interface{}, matches []interface{}) bool {
 	return false
 }
 
+func (m Map) IsColumnSame(startPoint Vector) bool {
+	for y := 0; y < m.Height(); y++ {
+		newPos := NewVector(startPoint.X(), y)
+		if m[newPos] != m[startPoint] {
+			return false
+		}
+	}
+	return true
+}
+
+func (m Map) IsLineSame(startPoint Vector) bool {
+	for x := 0; x < m.Width(); x++ {
+		newPos := NewVector(x, startPoint.Y())
+		if m[newPos] != m[startPoint] {
+			return false
+		}
+	}
+	return true
+}
+
+func (m Map) DuplicateLine(y int) Map {
+	clone := make(Map)
+	for k, v := range m {
+		if k.Y() >= y {
+			clone[NewVector(k.X(), y+1)] = v
+		} else {
+			clone[k] = v
+		}
+	}
+
+	return clone
+}
+
+func (m Map) DuplicateColumn(x int) Map {
+	clone := make(Map)
+	for k, v := range m {
+		if k.X() >= x {
+			clone[NewVector(x+1, k.Y())] = v
+		} else {
+			clone[k] = v
+		}
+	}
+
+	return clone
+}
+
+func (m Map) Print() {
+	for i := m.Height() - 1; i > 0; i-- {
+		for j := 0; j < m.Width(); j++ {
+			fmt.Print(m[NewVector(j, i)])
+		}
+		fmt.Println()
+	}
+}
+
 // TODO: render map
