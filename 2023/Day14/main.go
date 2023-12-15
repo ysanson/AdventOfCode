@@ -1,13 +1,17 @@
 package main
 
 import (
-	"fmt"
 	"slices"
 	"strings"
 
 	"github.com/ysanson/AdventOfCode/2023/pkg"
 	"github.com/ysanson/AdventOfCode/2023/pkg/execute"
 )
+
+type Iter struct {
+	iteration  int
+	rocksCount int
+}
 
 func parseInput(input string) [][]rune {
 	lines := strings.Split(input, "\n")
@@ -70,13 +74,84 @@ func moveRocks(col []rune) []rune {
 	return newCol
 }
 
-func print(field [][]rune) {
+func fieldToString(field [][]rune) string {
+	var sb strings.Builder
+	sb.Grow(len(field[0]) * len(field))
 	for i := 0; i < len(field); i++ {
 		for j := 0; j < len(field[i]); j++ {
-			fmt.Printf("%c", field[i][j])
+			sb.WriteRune(field[i][j])
 		}
-		fmt.Println()
+		sb.WriteRune('\n')
 	}
+	return sb.String()
+}
+
+func tiltNorth(field [][]rune) [][]rune {
+	transpose := pkg.TransposeMatrix(field)
+	for idx, col := range transpose {
+		transpose[idx] = moveRocks(col)
+	}
+	return pkg.TransposeMatrix(transpose)
+}
+
+func tiltWest(field [][]rune) [][]rune {
+	for idx, line := range field {
+		field[idx] = moveRocks(line)
+	}
+	return field
+}
+
+func tiltSouth(field [][]rune) [][]rune {
+	transpose := pkg.TransposeMatrix(field)
+	for idx, col := range transpose {
+		slices.Reverse(transpose[idx])
+		transpose[idx] = moveRocks(col)
+		slices.Reverse(transpose[idx])
+	}
+	return pkg.TransposeMatrix(transpose)
+}
+
+func tiltEast(field [][]rune) [][]rune {
+	for idx, line := range field {
+		slices.Reverse(field[idx])
+		field[idx] = moveRocks(line)
+		slices.Reverse(field[idx])
+	}
+	return field
+}
+
+func rotateCycle(field [][]rune, maxIterations int) int {
+	records := make(map[string]Iter, 20)
+	f := field
+	idx := 0
+	var iteration Iter
+	exists := false
+	//Search for the loop
+	for !exists {
+		f = tiltNorth(f)
+		f = tiltWest(f)
+		f = tiltSouth(f)
+		f = tiltEast(f)
+
+		hash := fieldToString(f)
+		iteration, exists = records[hash]
+		if !exists {
+			records[hash] = Iter{
+				iteration:  idx + 1,
+				rocksCount: countRockWeight(f),
+			}
+		}
+		idx++
+	}
+	// Loop is found
+	loopLength := idx - iteration.iteration
+	resultIdx := iteration.iteration + (maxIterations-iteration.iteration)%(loopLength)
+	for _, results := range records {
+		if results.iteration == resultIdx {
+			return results.rocksCount
+		}
+	}
+	return -1
 }
 
 func countRocks(line []rune) int {
@@ -107,7 +182,7 @@ func run(input string) (any, any) {
 	}
 	inverted = pkg.TransposeMatrix(inverted)
 	part1 = countRockWeight(inverted)
-
+	part2 = rotateCycle(field, 1000000000)
 	return part1, part2
 }
 
