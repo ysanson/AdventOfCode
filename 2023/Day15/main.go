@@ -34,13 +34,12 @@ func computeHash(str string) int {
 func computeFocusingPower(boxes Boxes) int {
 	res := 0
 
-	for i := 0; i < len(boxes); i++ {
-		if len(boxes[i]) > 0 {
-			for j := 0; j < len(boxes[i]); j++ {
-				res += (i + 1) * (j + 1) * boxes[i][j].focalLength
-			}
+	for boxIdx, box := range boxes {
+		for lensIdx, lens := range box {
+			res += (boxIdx + 1) * (lensIdx + 1) * lens.focalLength
 		}
 	}
+
 	return res
 }
 
