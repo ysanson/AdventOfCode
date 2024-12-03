@@ -36,7 +36,6 @@ func checkDampenedReport(report []int) bool {
 		reportCopy := make([]int, len(report))
 		copy(reportCopy, report)
 		compensatedReport := slices.Delete(reportCopy, i, i+1)
-
 		if isSafe(compensatedReport) {
 			return true
 		}
