@@ -21,14 +21,29 @@ func calculateMulFunctions(line string) int {
 
 func removeDontFunctions(line string) string {
 	if idx := strings.Index(line, "don't()"); idx != -1 {
-		if doIdx := strings.Index(line[idx+6:], "do()"); doIdx != -1 {
-			return removeDontFunctions(line[:idx+6] + line[idx+doIdx+6:]) // Remove the portion between dont and do, and reiterate
+		if doIdx := strings.Index(line[idx:], "do()"); doIdx != -1 {
+			return removeDontFunctions(line[:idx] + line[idx+doIdx:]) // Remove the portion between dont and do, and reiterate
 		} else {
-			return line[:idx+6] // No matching do, we keep only what's before the dont
+			return line[:idx] // No matching do, we keep only what's before the dont
 		}
 	} else {
 		return line // No dont, we return the whole line
 	}
+}
+
+func splitRemove(line string) string {
+	if strings.Contains(line, "don't()") {
+		var sb strings.Builder
+		for _, part := range strings.Split(line, "do()") {
+			if dontIdx := strings.Index(part, "don't()"); dontIdx != -1 {
+				sb.WriteString(part[:dontIdx])
+			} else {
+				sb.WriteString(part)
+			}
+		}
+		return sb.String()
+	}
+	return line
 }
 
 func run(input string) (interface{}, interface{}) {
