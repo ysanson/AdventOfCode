@@ -10,8 +10,9 @@ func countHorizontalWords(input string) int {
 	return strings.Count(input, "XMAS") + strings.Count(input, "SAMX")
 }
 
-func countVerticalWords(lines []string) int {
+func countVerticalWords(lines []string, length int) int {
 	var invertedInput strings.Builder
+	invertedInput.Grow(length + len(lines))
 	for i := range len(lines[0]) {
 		for _, line := range lines {
 			invertedInput.WriteByte(line[i])
@@ -66,7 +67,7 @@ func countMas(lines []string) int {
 func run(input string) (interface{}, interface{}) {
 	input = strings.TrimSpace(input)
 	lines := strings.Split(input, "\n")
-	return countHorizontalWords(input) + countVerticalWords(lines) + countDiagonalWords(lines), countMas(lines)
+	return countHorizontalWords(input) + countVerticalWords(lines, len(input)) + countDiagonalWords(lines), countMas(lines)
 }
 
 func main() {
