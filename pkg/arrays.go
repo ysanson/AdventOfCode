@@ -1,6 +1,9 @@
 package pkg
 
-import "iter"
+import (
+	"iter"
+	"sort"
+)
 
 func SanitizeIndex(index int, maxIndex int) int {
 	if index < 0 {
@@ -43,11 +46,43 @@ func IsSameElement[T comparable](slice []T) bool {
 }
 
 func Zip[T, U any](t []T, u []U) iter.Seq2[T, U] {
-    return func(yield func(T, U) bool) {
-        for i := range min(len(t), len(u)) {
-            if !yield(t[i], u[i]) {
-                return
-            }
-        }
-    }
+	return func(yield func(T, U) bool) {
+		for i := range min(len(t), len(u)) {
+			if !yield(t[i], u[i]) {
+				return
+			}
+		}
+	}
+}
+
+func IntersectSorted[T comparable](a []T, b []T) []T {
+	set := make([]T, 0)
+
+	for _, v := range a {
+		idx := sort.Search(len(b), func(i int) bool {
+			return b[i] == v
+		})
+		if idx < len(b) && b[idx] == v {
+			set = append(set, v)
+		}
+	}
+
+	return set
+}
+
+func IntersectHash[T comparable](a []T, b []T) []T {
+	set := make([]T, 0)
+	hash := make(map[T]struct{})
+
+	for _, v := range a {
+		hash[v] = struct{}{}
+	}
+
+	for _, v := range b {
+		if _, ok := hash[v]; ok {
+			set = append(set, v)
+		}
+	}
+
+	return set
 }
