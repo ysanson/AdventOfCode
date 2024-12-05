@@ -56,13 +56,28 @@ func processUpdate(orders map[int][]int, update []int) (int, int) {
 	return update[len(update)/2], 0
 }
 
+func processBySorted(orders map[int][]int, update []int) (int, int) {
+	cmp := func(a, b int) int {
+		if slices.Contains(orders[b], a) {
+			return 0
+		}
+		return -1
+	}
+
+	if slices.IsSortedFunc(update, cmp) {
+		return update[len(update)/2], 0
+	}
+	slices.SortFunc(update, cmp)
+	return 0, update[len(update)/2]
+}
+
 func run(input string) (interface{}, interface{}) {
 	data := strings.Split(input, "\n\n")
 	ordering := parseOrders(data[0])
 	updates := parseUpdates(data[1])
 	part1, part2 := 0, 0
 	for _, update := range updates {
-		first, second := processUpdate(ordering, update)
+		first, second := processBySorted(ordering, update)
 		part1 += first
 		part2 += second
 	}
