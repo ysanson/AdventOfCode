@@ -87,3 +87,20 @@ func (p *P) TurnLeft() {
 func (p *P) TurnRight() {
 	p.Speed = p.Speed.Rotate(-math.Pi / 2)
 }
+
+func (p *P) IsOutOfMap(m Map) bool {
+	return p.Pos.X() < 0 || p.Pos.X() > m.Width() || p.Pos.Y() < 0 || p.Pos.Y() > m.Height()
+}
+
+func (p *P) IsOutOfMapLimits(m *Map, width, height *int) bool {
+	return p.Pos.X() < 0 || p.Pos.X() > *width || p.Pos.Y() < 0 || p.Pos.Y() > *height
+}
+
+func (p *P) GetPositionAtDestination(direction Vector, steps int) Vector {
+	newPos := &P{
+		Pos:   p.Pos,
+		Speed: direction,
+	}
+	newPos.Move(steps)
+	return newPos.Pos
+}
