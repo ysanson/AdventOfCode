@@ -1,10 +1,7 @@
 package main
 
 import (
-	"fmt"
-	"os"
 	"runtime"
-	"runtime/trace"
 	"slices"
 
 	"github.com/ysanson/AdventOfCode/pkg/execute"
@@ -31,10 +28,10 @@ func getNextDirection(curDir twod.Vector) twod.Vector {
 	}
 }
 
-func runPart1(plan twod.Map, startingPos *twod.P) (twod.Map, []VisitedPoint) {
+func runPart1(plan twod.Map, startingPos *twod.P, width, height *int) (twod.Map, []VisitedPoint) {
 	position := startingPos
 	visited := make([]VisitedPoint, 0)
-	for !position.IsOutOfMap(plan) {
+	for !position.IsOutOfMapLimits(&plan, width, height) {
 		visited = append(visited, VisitedPoint{Pos: position.Pos, Direction: position.Speed})
 		plan.UpdatePosition(position.Pos, 'X')
 		dest := position.GetPositionAtDestination(position.Speed, 1)
@@ -46,72 +43,63 @@ func runPart1(plan twod.Map, startingPos *twod.P) (twod.Map, []VisitedPoint) {
 	return plan, visited
 }
 
-// if same point and same direction => cycle detected
-func hasCycle(visited map[VisitedPoint]bool, current VisitedPoint) bool {
-	_, ok := visited[current]
-	return ok
-}
-
-func runWithObstacle(plan *twod.Map, position *twod.P, upd twod.Vector, path *[]VisitedPoint) int {
-	visited := make(map[VisitedPoint]bool)
+func runWithObstacle(plan *twod.Map, position twod.P, upd twod.Vector, path *[]VisitedPoint, width, height *int) int {
+	wallHit := make(map[VisitedPoint]bool)
 	var current VisitedPoint
-	if skip := slices.IndexFunc(*path, func(e VisitedPoint) bool { return e.Pos.X() == upd.X() && e.Pos.Y() == upd.Y() }); skip > 0 {
-		current = (*path)[skip-1]
+	if skip := slices.IndexFunc(*path, func(e VisitedPoint) bool { return e.Pos == upd }); skip > 0 {
+		pos := (*path)[skip-1]
+		position.Pos = pos.Pos
+		position.Speed = pos.Direction
 	}
-	for !position.IsOutOfMap(*plan) {
-		current = VisitedPoint{Pos: position.Pos, Direction: position.Speed}
-		if hasCycle(visited, current) {
-			fmt.Printf("Found cycle at X=%d, Y=%d\n", upd.X(), upd.Y())
-			return 1
-		}
-		visited[current] = true
-		dest := position.GetPositionAtDestination(position.Speed, 1)
-		for (*plan)[dest] == '#' || dest == upd {
+	for !position.IsOutOfMapLimits(plan, width, height) {
+		for dest := position.GetPositionAtDestination(position.Speed, 1); (*plan)[dest] == '#' || dest == upd; dest = position.GetPositionAtDestination(position.Speed, 1) {
+			current = VisitedPoint{Pos: position.Pos, Direction: position.Speed}
+			if _, ok := wallHit[current]; ok {
+				return 1
+			}
+			wallHit[current] = true
 			position.Speed = getNextDirection(position.Speed)
-			dest = position.GetPositionAtDestination(position.Speed, 1)
 		}
 		position.Move(1)
 	}
 	return 0
 }
 
-func worker(baseMap *twod.Map, startingPoint *twod.P, path *[]VisitedPoint, jobs <-chan twod.Vector, results chan<- int) {
+func worker(baseMap *twod.Map, startingPoint *twod.P, path *[]VisitedPoint, width, height *int, jobs <-chan twod.Vector, results chan<- int) {
 	for position := range jobs {
-		results <- runWithObstacle(baseMap, startingPoint.Clone(), position, path)
+		results <- runWithObstacle(baseMap, *startingPoint.Clone(), position, path, width, height)
 	}
 }
 
-func computeWorkerGroup(positions []twod.Vector, baseMap *twod.Map, startingPoint *twod.P, path *[]VisitedPoint) int {
+func computeWorkerGroup(positions []twod.Vector, baseMap *twod.Map, startingPoint *twod.P, path *[]VisitedPoint, width, height *int) int {
 	n := len(positions)
 	jobs := make(chan twod.Vector, n)
 	resChannel := make(chan int, n)
 	for range runtime.NumCPU() {
-		go worker(baseMap, startingPoint, path, jobs, resChannel)
+		go worker(baseMap, startingPoint, path, width, height, jobs, resChannel)
 	}
 	for _, pos := range positions {
 		jobs <- pos
 	}
 	close(jobs)
 	result := 0
-	for a := 1; a <= n; a++ {
+	for range n {
 		result += <-resChannel
 	}
+	close(resChannel)
 	return result
 }
 
 func run(input string) (interface{}, interface{}) {
 	baseMap := twod.NewMapFromInput(input)
+	width, height := baseMap.Width(), baseMap.Height()
 	startingPoint := twod.NewPoint(baseMap.Find('^')[0], twod.UP)
-	planPart1, path := runPart1(baseMap.Clone(), startingPoint.Clone())
-	fmt.Println("Part 1 is done")
+	planPart1, path := runPart1(baseMap.Clone(), startingPoint.Clone(), &width, &height)
 	discoveredPlaces := planPart1.Find('X')
 
-	return len(discoveredPlaces), computeWorkerGroup(discoveredPlaces, &baseMap, startingPoint, &path)
+	return len(discoveredPlaces), computeWorkerGroup(discoveredPlaces, &baseMap, startingPoint, &path, &width, &height)
 }
 
 func main() {
-	f, _ := os.Create("trace.out")
-	trace.Start(f)
-	defer trace.Stop()
 	execute.Run(run, nil, Puzzle, false)
 }
