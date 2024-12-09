@@ -5,8 +5,6 @@ import (
 	"math"
 	"sort"
 	"strings"
-
-	"github.com/ysanson/AdventOfCode/pkg"
 )
 
 type Map map[Vector]interface{}
@@ -283,7 +281,7 @@ func (m Map) Width() int {
 
 // Height returns height of the map.
 func (m Map) Height() int {
-	return pkg.Abs(m.FindBottomRight().Y() - m.FindTopRight().Y() + 1)
+	return m.FindTopRight().X() - m.FindTopLeft().X() + 1
 }
 
 func (m Map) String() string {
