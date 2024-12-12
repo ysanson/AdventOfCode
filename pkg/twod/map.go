@@ -313,19 +313,19 @@ func (m Map) String() string {
 	return s
 }
 
-func (m Map) FindNeighbors(fromPos Vector) []Vector {
-	neighbors := make([]Vector, 0, 4)
+func (m Map) FindNeighbors(fromPos Vector) map[string]Vector {
+	neighbors := make(map[string]Vector, 4)
 	if _, ok := m[fromPos+UP]; ok {
-		neighbors = append(neighbors, fromPos+UP)
+		neighbors["up"] = fromPos + UP
 	}
 	if _, ok := m[fromPos+DOWN]; ok {
-		neighbors = append(neighbors, fromPos+DOWN)
+		neighbors["down"] = fromPos + DOWN
 	}
 	if _, ok := m[fromPos+LEFT]; ok {
-		neighbors = append(neighbors, fromPos+LEFT)
+		neighbors["left"] = fromPos + LEFT
 	}
 	if _, ok := m[fromPos+RIGHT]; ok {
-		neighbors = append(neighbors, fromPos+RIGHT)
+		neighbors["right"] = fromPos + RIGHT
 	}
 	return neighbors
 }
