@@ -9,19 +9,27 @@ import (
 	"github.com/ysanson/AdventOfCode/pkg/twod"
 )
 
-func countCorners(neighbors map[string]twod.Vector) int {
-	switch len(neighbors) {
-	case 1:
+func countCorners(pos twod.Vector, neighbors map[string]twod.Vector, plan twod.Map) int {
+	if len(neighbors) == 1 {
 		return 2
-	case 2:
-		if pkg.SetContainsAll(neighbors, "up", "down") || pkg.SetContainsAll(neighbors, "left", "right") {
-			return 0
-		} else {
-			return 1
-		}
-	default:
-		return 0
 	}
+	corners := 0
+	if len(neighbors) == 2 && (!pkg.SetContainsAll(neighbors, "up", "down") && !pkg.SetContainsAll(neighbors, "left", "right")) {
+		corners = 1
+	}
+	if flower, ok := plan[pos+twod.UPLEFT]; ok && flower != plan[pos] && pkg.SetContainsAll(neighbors, "up", "left") {
+		corners++
+	}
+	if flower, ok := plan[pos+twod.UPRIGHT]; ok && flower != plan[pos] && pkg.SetContainsAll(neighbors, "up", "right") {
+		corners++
+	}
+	if flower, ok := plan[pos+twod.DOWNLEFT]; ok && flower != plan[pos] && pkg.SetContainsAll(neighbors, "down", "left") {
+		corners++
+	}
+	if flower, ok := plan[pos+twod.DOWNRIGHT]; ok && flower != plan[pos] && pkg.SetContainsAll(neighbors, "down", "right") {
+		corners++
+	}
+	return corners
 }
 
 func computeFence(fromPos twod.Vector, plan twod.Map) (int, int, map[twod.Vector]bool) {
@@ -37,8 +45,11 @@ func computeFence(fromPos twod.Vector, plan twod.Map) (int, int, map[twod.Vector
 		return ngb
 	}
 	ngb := delUnrelatedNeighbor(plan.FindNeighbors(fromPos))
+	if len(ngb) == 0 {
+		return 4, 4, area
+	}
 	perimeter := 4 - len(ngb)
-	corners := countCorners(ngb)
+	corners := countCorners(fromPos, ngb, plan)
 	neighbors := slices.Collect(maps.Values(ngb))
 
 	processNeighbors := func(neighbors []twod.Vector) []twod.Vector {
@@ -47,7 +58,7 @@ func computeFence(fromPos twod.Vector, plan twod.Map) (int, int, map[twod.Vector
 			area[nb] = true
 			filtered := delUnrelatedNeighbor(plan.FindNeighbors(nb))
 			perimeter += 4 - len(filtered)
-			corners += countCorners(filtered)
+			corners += countCorners(nb, filtered, plan)
 			for dir, pos := range filtered {
 				if _, ok := area[pos]; ok {
 					delete(filtered, dir)
@@ -65,7 +76,7 @@ func computeFence(fromPos twod.Vector, plan twod.Map) (int, int, map[twod.Vector
 	for len(neighbors) > 0 {
 		neighbors = processNeighbors(neighbors)
 	}
-	return perimeter * len(area), corners, area
+	return perimeter, corners, area
 }
 
 func run(input string) (interface{}, interface{}) {
@@ -74,9 +85,9 @@ func run(input string) (interface{}, interface{}) {
 	processed := make(map[twod.Vector]bool)
 	for position := range plan {
 		if _, ok := processed[position]; !ok {
-			fences, corners, area := computeFence(position, plan)
-			part1 += fences
-			part2 += corners
+			perimeter, corners, area := computeFence(position, plan)
+			part1 += perimeter * len(area)
+			part2 += corners * len(area)
 			maps.Insert(processed, maps.All(area))
 		}
 	}
