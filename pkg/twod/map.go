@@ -313,6 +313,23 @@ func (m Map) String() string {
 	return s
 }
 
+func (m Map) FindNeighbors(fromPos Vector) []Vector {
+	neighbors := make([]Vector, 0, 4)
+	if _, ok := m[fromPos+UP]; ok {
+		neighbors = append(neighbors, fromPos+UP)
+	}
+	if _, ok := m[fromPos+DOWN]; ok {
+		neighbors = append(neighbors, fromPos+DOWN)
+	}
+	if _, ok := m[fromPos+LEFT]; ok {
+		neighbors = append(neighbors, fromPos+LEFT)
+	}
+	if _, ok := m[fromPos+RIGHT]; ok {
+		neighbors = append(neighbors, fromPos+RIGHT)
+	}
+	return neighbors
+}
+
 func printValue(v interface{}) string {
 	ascii, isASCII := v.(int32)
 	if isASCII {
