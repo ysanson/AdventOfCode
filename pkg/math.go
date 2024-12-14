@@ -1,6 +1,9 @@
 package pkg
 
-import "math/bits"
+import (
+	"math"
+	"math/bits"
+)
 
 func Abs(i int) int {
 	if i < 0 {
@@ -124,4 +127,8 @@ func Combinations[T any](set []T, n int) (subsets [][]T) {
 		subsets = append(subsets, subset)
 	}
 	return subsets
+}
+
+func IsInteger(num float64) bool {
+	return math.Mod(num, 1) == 0
 }
