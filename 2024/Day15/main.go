@@ -27,7 +27,7 @@ func getSpacePosition(position twod.P, plan twod.Map) (twod.Vector, bool) {
 		if plan[position.Pos] == WALL {
 			return -1, false
 		}
-		if plan[position.Pos] == BOX || plan[position.Pos] == LEFTBOX || plan[position.Pos] == RIGHTBOX {
+		if plan[position.Pos] == BOX {
 			hasBoxes = true
 		}
 	}
@@ -115,7 +115,7 @@ func computeGPS(plan twod.Map, H int) int {
 	return sum
 }
 
-func part1(plan *twod.Map, moves string) {
+func processMoves(plan *twod.Map, moves string, moveFunc func(*twod.P, *twod.Map)) {
 	robotPos := twod.P{Pos: plan.Find(ROBOT)[0]}
 	for _, move := range moves {
 		if move == '\n' {
@@ -131,38 +131,18 @@ func part1(plan *twod.Map, moves string) {
 		case '<':
 			robotPos.Speed = twod.LEFT
 		}
-		moveBoxes(&robotPos, plan)
+		moveFunc(&robotPos, plan)
 	}
-}
-
-func part2(input string, moves string) twod.Map {
-	plan := widenMap(input)
-	robotPos := twod.P{Pos: plan.Find(ROBOT)[0]}
-	for _, move := range moves {
-		if move == '\n' {
-			continue
-		}
-		switch move {
-		case '^':
-			robotPos.Speed = twod.UP
-		case '>':
-			robotPos.Speed = twod.RIGHT
-		case 'v':
-			robotPos.Speed = twod.DOWN
-		case '<':
-			robotPos.Speed = twod.LEFT
-		}
-		moveWideBoxes(&robotPos, &plan)
-	}
-	return plan
 }
 
 func run(input string) (interface{}, interface{}) {
 	parsed := strings.Split(input, "\n\n")
 	plan := twod.NewMapFromInput(parsed[0])
 	H := plan.Height()
-	part1(&plan, parsed[1])
-	widePlan := part2(parsed[0], parsed[1])
+	processMoves(&plan, parsed[1], moveBoxes)
+
+	widePlan := widenMap(parsed[0])
+	processMoves(&widePlan, parsed[1], moveWideBoxes)
 
 	return computeGPS(plan, H), computeGPS(widePlan, H)
 }
