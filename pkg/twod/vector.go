@@ -66,3 +66,7 @@ func roundComplex(c complex128) Vector {
 	r, i := real(c), imag(c)
 	return Vector(complex(math.Round(r), math.Round(i)))
 }
+
+func (v Vector) IsOutOfBounds(W, H int) bool {
+	return v.X() < 0 || v.X() > W || v.Y() < 0 || v.Y() > H
+}

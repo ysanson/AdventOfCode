@@ -21,13 +21,12 @@ func getSpacePosition(position twod.P, plan twod.Map) (twod.Vector, bool) {
 	hasBoxes := false
 	for {
 		position.Move(1)
-		if plan[position.Pos] == EMPTY {
+		switch plan[position.Pos] {
+		case EMPTY:
 			return position.Pos, hasBoxes
-		}
-		if plan[position.Pos] == WALL {
+		case WALL:
 			return -1, false
-		}
-		if plan[position.Pos] == BOX {
+		case BOX:
 			hasBoxes = true
 		}
 	}

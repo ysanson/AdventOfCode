@@ -66,8 +66,7 @@ func (p *P) PathNeighbors() []astar.Pather {
 		p.Move(1)
 
 		// if the position is valid, explore it
-		_, exist := p.emptyPoints[p.Pos]
-		if exist {
+		if _, exist := p.emptyPoints[p.Pos]; exist {
 			newP := p.Clone()
 			delete(newP.emptyPoints, p.Pos) // remove position already explored
 			adjs = append(adjs, newP)
