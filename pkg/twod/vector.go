@@ -68,5 +68,5 @@ func roundComplex(c complex128) Vector {
 }
 
 func (v Vector) IsOutOfBounds(W, H int) bool {
-	return v.X() < 0 || v.X() > W || v.Y() < 0 || v.Y() > H
+	return v.X() < 0 || v.X() >= W || v.Y() < 0 || v.Y() >= H
 }
