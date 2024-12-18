@@ -132,3 +132,35 @@ func Combinations[T any](set []T, n int) (subsets [][]T) {
 func IsInteger(num float64) bool {
 	return math.Mod(num, 1) == 0
 }
+
+func IntPow(n, m int) int {
+	if m == 0 {
+		return 1
+	}
+
+	if m == 1 {
+		return n
+	}
+
+	result := n
+	for i := 2; i <= m; i++ {
+		result *= n
+	}
+	return result
+}
+
+func UintPow(n, m uint64) uint64 {
+	if m == 0 {
+		return 1
+	}
+
+	if m == 1 {
+		return n
+	}
+
+	result := n
+	for i := 2; uint64(i) <= m; i++ {
+		result *= n
+	}
+	return result
+}
