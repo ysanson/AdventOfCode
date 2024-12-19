@@ -28,11 +28,7 @@ func findPossibleCombinations(towels []string, pattern string, previousPatterns 
 func run(input string) (interface{}, interface{}) {
 	part1, part2 := 0, 0
 	lines := strings.Split(input, "\n")
-	t, patterns := strings.Split(lines[0], ","), lines[2:]
-	towels := make([]string, len(t))
-	for i, towel := range t {
-		towels[i] = strings.TrimPrefix(towel, " ")
-	}
+	towels, patterns := strings.Split(lines[0], ", "), lines[2:]
 	previousPatterns := make(map[string]int)
 	for _, pattern := range patterns {
 		if count := findPossibleCombinations(towels, pattern, &previousPatterns); count > 0 {
