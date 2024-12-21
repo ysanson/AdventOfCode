@@ -38,6 +38,10 @@ func (v Vector) DistFrom(from Vector) int {
 	return pkg.Abs(dist.X()) + pkg.Abs(dist.Y())
 }
 
+func (v Vector) ManhatanDistance(from Vector) int {
+	return pkg.Abs(v.X()-from.X()) + pkg.Abs(v.Y()-from.Y())
+}
+
 func (v Vector) AngleFrom(from Vector) float64 {
 	return cmplx.Phase((v - from).C())
 }
