@@ -9,7 +9,7 @@ import (
 	"github.com/ysanson/AdventOfCode/pkg/twod"
 )
 
-func Run(run func(string) (interface{}, interface{}), test TestCases, puzzle string, verbose bool) {
+func Run(run func(string) (any, any), test TestCases, puzzle string, verbose bool) {
 	if test != nil {
 		test.Run(run, !verbose)
 	}
