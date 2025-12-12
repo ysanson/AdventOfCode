@@ -70,3 +70,11 @@ func Check(err error) {
 		panic(err)
 	}
 }
+
+func ParseIntoMatrix(lines []string) [][]rune {
+	matrix := make([][]rune, len(lines))
+	for i, line := range lines {
+		matrix[i] = []rune(line)
+	}
+	return matrix
+}
