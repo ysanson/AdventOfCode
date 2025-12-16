@@ -129,6 +129,34 @@ func Combinations[T any](set []T, n int) (subsets [][]T) {
 	return subsets
 }
 
+func CombinationsChan[T any](items []T, k int) <-chan []T {
+	out := make(chan []T)
+
+	go func() {
+		defer close(out)
+		var comb []T
+
+		var dfs func(start int)
+		dfs = func(start int) {
+			if len(comb) == k {
+				tmp := make([]T, k)
+				copy(tmp, comb)
+				out <- tmp
+				return
+			}
+			for i := start; i < len(items); i++ {
+				comb = append(comb, items[i])
+				dfs(i + 1)
+				comb = comb[:len(comb)-1]
+			}
+		}
+
+		dfs(0)
+	}()
+
+	return out
+}
+
 func IsInteger(num float64) bool {
 	return math.Mod(num, 1) == 0
 }
