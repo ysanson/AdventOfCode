@@ -86,3 +86,15 @@ func IntersectHash[T comparable](a []T, b []T) []T {
 
 	return set
 }
+
+func AdjacentPairs[T any](items []T) [][2]T {
+	if len(items) < 2 {
+		return nil
+	}
+
+	pairs := make([][2]T, 0, len(items)-1)
+	for i := 0; i < len(items)-1; i++ {
+		pairs = append(pairs, [2]T{items[i], items[i+1]})
+	}
+	return pairs
+}
