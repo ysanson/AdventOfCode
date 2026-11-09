@@ -37,6 +37,9 @@ type P struct {
 	// emptyPoints and target are used for astar algorithm
 	emptyPoints   Map
 	exitCondition func(currentPoint *P, neighbors []astar.Pather) []astar.Pather
+	// nodes holds the single node of each position during a shortest path
+	// search. The astar library tracks costs per node pointer.
+	nodes map[Vector]*P
 }
 
 func NewPoint(position Vector, direction Vector) *P {

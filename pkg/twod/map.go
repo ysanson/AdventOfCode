@@ -13,7 +13,7 @@ type Map map[Vector]interface{}
 // based on its coordinate. Every vector in the map is positive, which means that
 // the bottom left of the input will be at the origin of the Map.
 func NewMapFromInput(input string) Map {
-	m := make(Map)
+	m := make(Map, len(input))
 	lines := strings.Split(input, "\n")
 	for j, line := range lines {
 		for i, char := range line {
@@ -117,17 +117,20 @@ func (m Map) ToSlice() []Vector {
 // SortByDist will sort the sliced map by distance from the given position (lowest to max).
 // If two points have the same distance the order will be based on radian angle (lowest to max).
 func (m Map) SortByDist(from Vector) []Vector {
-	sortedKeys := m.ToSlice()
-	sort.Slice(sortedKeys, func(i, j int) bool {
-		if sortedKeys[i].DistFrom(from) < sortedKeys[j].DistFrom(from) {
+	return sortByDist(m.ToSlice(), from)
+}
+
+func sortByDist(points []Vector, from Vector) []Vector {
+	sort.Slice(points, func(i, j int) bool {
+		if points[i].DistFrom(from) < points[j].DistFrom(from) {
 			return true
 		}
-		if sortedKeys[i].DistFrom(from) > sortedKeys[j].DistFrom(from) {
+		if points[i].DistFrom(from) > points[j].DistFrom(from) {
 			return false
 		}
-		return sortedKeys[i].AngleFrom(from) < sortedKeys[j].AngleFrom(from)
+		return points[i].AngleFrom(from) < points[j].AngleFrom(from)
 	})
-	return sortedKeys
+	return points
 }
 
 func (m Map) SortValuesByDist(from Vector) []interface{} {
@@ -139,14 +142,13 @@ func (m Map) SortValuesByDist(from Vector) []interface{} {
 }
 
 func (m Map) Find(matches ...interface{}) []Vector {
-	sorted := m.SortByDist(0)
 	founds := []Vector(nil)
-	for _, k := range sorted {
-		if hasMatch(m[k], matches) {
+	for k, v := range m {
+		if hasMatch(v, matches) {
 			founds = append(founds, k)
 		}
 	}
-	return founds
+	return sortByDist(founds, 0)
 }
 
 // FindPattern looks for a pattern in a map and return a list of pattern start points.
@@ -202,86 +204,60 @@ func (m Map) FindBottomFirstColumn() Vector {
 	return p
 }
 
+// bounds returns the extreme coordinates of the map, all 0 for an empty map.
+func (m Map) bounds() (minX, minY, maxX, maxY int) {
+	set := false
+	for k := range m {
+		x, y := k.X(), k.Y()
+		if !set {
+			set = true
+			minX, minY, maxX, maxY = x, y, x, y
+			continue
+		}
+		minX, maxX = min(minX, x), max(maxX, x)
+		minY, maxY = min(minY, y), max(maxY, y)
+	}
+	return
+}
+
 // FindTopLeft returns a point that represent the top left corner of a squared map only composed of the match values.
 // This point might not exist on the actual map.
 func (m Map) FindTopLeft() Vector {
-	minX, maxY := 0, 0
-	xSet, ySet := false, false
-	for k := range m {
-		if !xSet || k.X() < minX {
-			xSet = true
-			minX = k.X()
-		}
-		if !ySet || k.Y() > maxY {
-			ySet = true
-			maxY = k.Y()
-		}
-	}
+	minX, _, _, maxY := m.bounds()
 	return NewVector(minX, maxY)
 }
 
 // FindTopRight returns a point that represent the top right corner of a squared map only composed of the match values.
 // This point might not exist on the actual map.
 func (m Map) FindTopRight() Vector {
-	maxX, maxY := 0, 0
-	xSet, ySet := false, false
-	for k := range m {
-		if !xSet || k.X() > maxX {
-			xSet = true
-			maxX = k.X()
-		}
-		if !ySet || k.Y() > maxY {
-			ySet = true
-			maxY = k.Y()
-		}
-	}
+	_, _, maxX, maxY := m.bounds()
 	return NewVector(maxX, maxY)
 }
 
 // FindBottomLeft returns a point that represent the bottom left corner of a squared map only composed of the match values.
 // This point might not exist on the actual map.
 func (m Map) FindBottomLeft() Vector {
-	minX, minY := 0, 0
-	xSet, ySet := false, false
-	for k := range m {
-		if !xSet || k.X() < minX {
-			xSet = true
-			minX = k.X()
-		}
-		if !ySet || k.Y() < minY {
-			ySet = true
-			minY = k.Y()
-		}
-	}
+	minX, minY, _, _ := m.bounds()
 	return NewVector(minX, minY)
 }
 
 // FindBottomRight returns a point that represent the bottom right corner of a squared map only composed of the match values.
 // This point might not exist on the actual map.
 func (m Map) FindBottomRight() Vector {
-	maxX, minY := 0, 0
-	xSet, ySet := false, false
-	for k := range m {
-		if !xSet || maxX < k.X() {
-			xSet = true
-			maxX = k.X()
-		}
-		if !ySet || minY > k.Y() {
-			ySet = true
-			minY = k.Y()
-		}
-	}
+	_, minY, maxX, _ := m.bounds()
 	return NewVector(maxX, minY)
 }
 
 // Width returns width of the map.
 func (m Map) Width() int {
-	return m.FindBottomRight().X() - m.FindBottomLeft().X() + 1
+	minX, _, maxX, _ := m.bounds()
+	return maxX - minX + 1
 }
 
 // Height returns height of the map.
 func (m Map) Height() int {
-	return m.FindTopRight().X() - m.FindTopLeft().X() + 1
+	_, minY, _, maxY := m.bounds()
+	return maxY - minY + 1
 }
 
 func (m Map) String() string {

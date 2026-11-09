@@ -11,11 +11,13 @@ func (p *P) Clone() *P {
 		Steps:         p.Steps,
 		emptyPoints:   p.emptyPoints.Clone(),
 		exitCondition: p.exitCondition,
+		nodes:         p.nodes,
 	}
 }
 
 func (p *P) LongestPos(emptyPoints Map) (maxPos Vector, maxDist int) {
 	p.emptyPoints = emptyPoints
+	p.nodes = nil
 	return p.longestPath(0)
 }
 
@@ -34,6 +36,7 @@ func (p *P) longestPath(currentDist int) (maxPos Vector, maxDist int) {
 
 func (p *P) ShortestPathToPos(pos Vector, emptyPoints Map) (path []*P, distance float64, found bool) {
 	p.emptyPoints = emptyPoints
+	p.nodes = map[Vector]*P{p.Pos: p}
 	target := NewPoint(pos, 0)
 
 	// exit condition is when current point pos is target position
@@ -53,11 +56,55 @@ func (p *P) ShortestPathToPos(pos Vector, emptyPoints Map) (path []*P, distance 
 		pointPath = append(pointPath, step.(*P))
 	}
 
+	// Nodes are shared between routes, so their step data is only known now.
+	// The path runs from the target back to the start, and the first entry is
+	// the target marker.
+	for i := len(pointPath) - 2; i > 0; i-- {
+		pointPath[i].Speed = pointPath[i].Pos - pointPath[i+1].Pos
+		pointPath[i].Steps = pointPath[i+1].Steps + 1
+	}
+
 	return pointPath, dist, found
 }
 
 func (p *P) PathNeighbors() []astar.Pather {
 	p.emptyPoints.Render()
+	var adjs []astar.Pather
+	if p.nodes != nil {
+		adjs = p.sharedNeighbors()
+	} else {
+		adjs = p.branchNeighbors()
+	}
+
+	// if this position is the end point, we found it
+	if p.exitCondition != nil {
+		return p.exitCondition(p, adjs)
+	}
+
+	return adjs
+}
+
+// sharedNeighbors returns the one node of each adjacent empty position.
+func (p *P) sharedNeighbors() []astar.Pather {
+	adjs := make([]astar.Pather, 0, 4)
+	for _, dir := range FourDirections {
+		pos := p.Pos + dir
+		if _, exist := p.emptyPoints[pos]; !exist {
+			continue
+		}
+		node, known := p.nodes[pos]
+		if !known {
+			node = &P{Pos: pos, Speed: dir, emptyPoints: p.emptyPoints, exitCondition: p.exitCondition, nodes: p.nodes}
+			p.nodes[pos] = node
+		}
+		adjs = append(adjs, node)
+	}
+	return adjs
+}
+
+// branchNeighbors gives each neighbour its own copy of the map, so that every
+// branch of an exhaustive search remembers only the positions it visited.
+func (p *P) branchNeighbors() []astar.Pather {
 	adjs := make([]astar.Pather, 0, 4)
 	for _, dir := range FourDirections {
 
@@ -73,12 +120,6 @@ func (p *P) PathNeighbors() []astar.Pather {
 		}
 		p.Move(-1)
 	}
-
-	// if this position is the end point, we found it
-	if p.exitCondition != nil {
-		return p.exitCondition(p, adjs)
-	}
-
 	return adjs
 }
 

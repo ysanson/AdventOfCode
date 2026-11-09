@@ -1,8 +1,6 @@
 package twod
 
 import (
-	"maps"
-
 	pq "github.com/emirpasic/gods/queues/priorityqueue"
 )
 
@@ -12,7 +10,7 @@ type Step struct {
 	coords  Vector
 	lastDir Vector
 	score   int
-	path    Path
+	parent  *Step // the step this one was reached from
 }
 
 type VisitedPoint struct {
@@ -20,12 +18,24 @@ type VisitedPoint struct {
 	lastDir Vector
 }
 
+// path lists the tiles leading to this step. A tile crossed twice keeps its
+// latest score.
+func (s Step) path() Path {
+	path := make(Path)
+	for step := &s; step != nil; step = step.parent {
+		if _, seen := path[step.coords]; !seen {
+			path[step.coords] = step.score
+		}
+	}
+	return path
+}
+
 func (m Map) Djikstra(from, to Vector, scoreFunc func(curDir, nextDir Vector) int) (int, Path) {
 	H, W := m.Height(), m.Width()
 	priorityQueue := pq.NewWith(func(a, b interface{}) int {
 		return a.(Step).score - b.(Step).score
 	})
-	priorityQueue.Enqueue(Step{from, RIGHT, 0, make(Path)})
+	priorityQueue.Enqueue(Step{coords: from, lastDir: RIGHT})
 	visited := make(map[VisitedPoint]bool)
 	for !priorityQueue.Empty() {
 		element, _ := priorityQueue.Dequeue()
@@ -34,9 +44,8 @@ func (m Map) Djikstra(from, to Vector, scoreFunc func(curDir, nextDir Vector) in
 			continue
 		}
 
-		currentNode.path[currentNode.coords] = currentNode.score
 		if currentNode.coords == to {
-			return currentNode.score, currentNode.path
+			return currentNode.score, currentNode.path()
 		}
 		for _, n := range m.getNextStep(currentNode, visited, H, W, scoreFunc) {
 			priorityQueue.Enqueue(n)
@@ -76,7 +85,7 @@ func (m Map) getNextStep(current Step, visited map[VisitedPoint]bool, H, W int, 
 			coords:  newPosition,
 			lastDir: dir,
 			score:   current.score + scoreFunc(current.lastDir, dir),
-			path:    maps.Clone(current.path),
+			parent:  &current,
 		})
 	}
 	return possibleNext
