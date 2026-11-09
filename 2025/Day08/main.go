@@ -1,7 +1,7 @@
 package main
 
 import (
-	"math"
+	"cmp"
 	"slices"
 	"strings"
 
@@ -10,26 +10,67 @@ import (
 )
 
 type Box struct {
-	X int
-	Y int
-	Z int
+	X, Y, Z int
 }
 
-func (b *Box) EuclidianDistance(dest Box) float64 {
-	return math.Sqrt(math.Pow(float64(b.X-dest.X), 2) + math.Pow(float64(b.Y-dest.Y), 2) + math.Pow(float64(b.Z-dest.Z), 2))
-}
-
-func (b *Box) LowerThan(other Box) bool {
-	return b.X < other.X && b.Y < other.Y && b.Z < other.Z
-}
-
-func (b *Box) Equals(other Box) bool {
-	return b.X == other.X && b.Y == other.Y && b.Z == other.Z
+// squaredDistance orders pairs the same way as the real distance, without
+// floating point.
+func (b Box) squaredDistance(other Box) int {
+	dx, dy, dz := b.X-other.X, b.Y-other.Y, b.Z-other.Z
+	return dx*dx + dy*dy + dz*dz
 }
 
 type BoxPair struct {
-	Box1 Box
-	Box2 Box
+	box1, box2 int // indexes into the box list
+	distance   int
+}
+
+// Circuits is a union-find over box indexes.
+type Circuits struct {
+	parent []int
+	size   []int
+}
+
+func newCircuits(n int) *Circuits {
+	c := &Circuits{parent: make([]int, n), size: make([]int, n)}
+	for i := range n {
+		c.parent[i] = i
+		c.size[i] = 1
+	}
+	return c
+}
+
+func (c *Circuits) find(box int) int {
+	for c.parent[box] != box {
+		c.parent[box] = c.parent[c.parent[box]]
+		box = c.parent[box]
+	}
+	return box
+}
+
+// connect joins two circuits, returning false if they were already one.
+func (c *Circuits) connect(a, b int) bool {
+	a, b = c.find(a), c.find(b)
+	if a == b {
+		return false
+	}
+	if c.size[a] < c.size[b] {
+		a, b = b, a
+	}
+	c.parent[b] = a
+	c.size[a] += c.size[b]
+	return true
+}
+
+func (c *Circuits) largestThreeProduct() int {
+	sizes := make([]int, 0, len(c.parent))
+	for box, parent := range c.parent {
+		if box == parent {
+			sizes = append(sizes, c.size[box])
+		}
+	}
+	slices.SortFunc(sizes, func(a, b int) int { return b - a })
+	return sizes[0] * sizes[1] * sizes[2]
 }
 
 func parseInput(input string) []Box {
@@ -46,88 +87,42 @@ func parseInput(input string) []Box {
 	return boxes
 }
 
-func findShortestDistance(distances map[BoxPair]float64) (pair BoxPair) {
-	shortest := math.MaxFloat64
-	for p, distance := range distances {
-		if distance < shortest {
-			shortest = distance
-			pair = p
-		}
-	}
-	return
-}
-
-func findCircuitIndex(circuits [][]Box, box Box) int {
-	compFunc := func(c Box) bool {
-		return c.Equals(box)
-	}
-	return slices.IndexFunc(circuits, func(el []Box) bool {
-		return slices.ContainsFunc(el, compFunc)
-	})
-}
-
-func longestCircuitLength(circuits [][]Box) int {
-	return len(slices.MaxFunc(circuits, func(a, b []Box) int {
-		return len(a) - len(b)
-	}))
-}
-
-func iterate(nbIterations int, boxes []Box, distances map[BoxPair]float64) int {
-	circuits := make([][]Box, len(boxes))
+func sortedPairs(boxes []Box) []BoxPair {
+	pairs := make([]BoxPair, 0, len(boxes)*(len(boxes)-1)/2)
 	for i, box := range boxes {
-		circuits[i] = []Box{box}
-	}
-	for range nbIterations {
-		pair := findShortestDistance(distances)
-		box1Idx, box2Idx := findCircuitIndex(circuits, pair.Box1), findCircuitIndex(circuits, pair.Box2)
-		if box1Idx != box2Idx {
-			circuits[box1Idx] = append(circuits[box1Idx], circuits[box2Idx]...)
-			circuits[box2Idx] = []Box{}
+		for j := i + 1; j < len(boxes); j++ {
+			pairs = append(pairs, BoxPair{i, j, box.squaredDistance(boxes[j])})
 		}
-		delete(distances, pair)
 	}
-	slices.SortFunc(circuits, func(a, b []Box) int {
-		return len(b) - len(a)
-	})
-
-	return len(circuits[0]) * len(circuits[1]) * len(circuits[2])
-}
-
-func findLastConnection(boxes []Box, distances map[BoxPair]float64) (pair BoxPair) {
-	circuits := make([][]Box, len(boxes))
-	for i, box := range boxes {
-		circuits[i] = []Box{box}
-	}
-	for longestCircuitLength(circuits) < len(boxes) {
-		pair = findShortestDistance(distances)
-		box1Idx, box2Idx := findCircuitIndex(circuits, pair.Box1), findCircuitIndex(circuits, pair.Box2)
-		if box1Idx != box2Idx {
-			circuits[box1Idx] = append(circuits[box1Idx], circuits[box2Idx]...)
-			circuits[box2Idx] = []Box{}
-		}
-		delete(distances, pair)
-	}
-	return
+	slices.SortFunc(pairs, func(a, b BoxPair) int { return cmp.Compare(a.distance, b.distance) })
+	return pairs
 }
 
 func run(input string) (any, any) {
 	boxes := parseInput(input)
-	distances := make(map[BoxPair]float64)
-	for pair := range pkg.CombinationsChan(boxes, 2) {
-		distances[BoxPair{Box1: pair[0], Box2: pair[1]}] = pair[0].EuclidianDistance(pair[1])
-	}
-	circuits := make([][]Box, len(boxes))
-	for i, box := range boxes {
-		circuits[i] = []Box{box}
-	}
-	part1 := 0
+	connections := 1000
 	if len(boxes) == 20 {
-		part1 = iterate(10, boxes, distances)
-	} else {
-		part1 = iterate(1000, boxes, distances)
+		connections = 10
 	}
-	lastPair := findLastConnection(boxes, distances)
-	return part1, lastPair.Box1.X * lastPair.Box2.X
+
+	circuits := newCircuits(len(boxes))
+	remaining := len(boxes)
+	part1, part2 := 0, 0
+	for i, pair := range sortedPairs(boxes) {
+		if i == connections {
+			part1 = circuits.largestThreeProduct()
+		}
+		if circuits.connect(pair.box1, pair.box2) {
+			remaining--
+			if remaining == 1 {
+				part2 = boxes[pair.box1].X * boxes[pair.box2].X
+			}
+		}
+		if i >= connections && remaining == 1 {
+			break
+		}
+	}
+	return part1, part2
 }
 
 func main() {
