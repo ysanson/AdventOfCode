@@ -5,7 +5,6 @@ import (
 	"regexp"
 	"slices"
 	"strings"
-	"time"
 
 	"github.com/ysanson/AdventOfCode/pkg"
 	"github.com/ysanson/AdventOfCode/pkg/execute"
@@ -29,6 +28,24 @@ func isUniquePos(robots []Robot) bool {
 		uniquePositions[Robot{x: robot.x, y: robot.y}] = true
 	}
 	return len(uniquePositions) == len(robots)
+}
+
+// hasRow reports whether at least length robots stand side by side in a row.
+func hasRow(robots []Robot, length int) bool {
+	occupied := make(map[[2]int]bool, len(robots))
+	for _, robot := range robots {
+		occupied[[2]int{robot.x, robot.y}] = true
+	}
+	for pos := range occupied {
+		run := 0
+		for occupied[[2]int{pos[0] + run, pos[1]}] {
+			run++
+		}
+		if run >= length {
+			return true
+		}
+	}
+	return false
 }
 
 func printGrid(robots []Robot, width, height int) {
@@ -85,9 +102,13 @@ func run(input string) (interface{}, interface{}) {
 		}
 	}
 
-	count := 100
-	for {
-		count++
+	part1 := pkg.Multiply(quad1, quad2, quad3, quad4)
+	if len(robots) == 12 {
+		return part1, 0 // the example has no tree to find
+	}
+
+	// Positions repeat after width*height seconds.
+	for count := 101; count <= 100+maxWidth*maxHeight; count++ {
 		for i, robot := range robots {
 			newX := (robot.x + robot.velX) % maxWidth
 			newY := (robot.y + robot.velY) % maxHeight
@@ -99,17 +120,12 @@ func run(input string) (interface{}, interface{}) {
 			}
 			robots[i].UpdateCoords(pkg.Abs(newX), pkg.Abs(newY))
 		}
-		if isUniquePos(robots) {
-			fmt.Printf("Count %d\n", count)
-			printGrid(robots, maxWidth, maxHeight)
-			time.Sleep(time.Second)
-			if count == 6857 {
-				break
-			}
+		if isUniquePos(robots) && hasRow(robots, 20) {
+			return part1, count
 		}
 	}
 
-	return pkg.Multiply(quad1, quad2, quad3, quad4), 6857
+	return part1, 0
 }
 
 func main() {

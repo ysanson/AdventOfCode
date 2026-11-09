@@ -3,11 +3,27 @@ package main
 import (
 	"fmt"
 	"image/color"
+	"slices"
+	"strings"
 
-	"github.com/ysanson/AdventOfCode/pkg/execute"
+	"github.com/ysanson/AdventOfCode/pkg/execute/pixel"
 	"github.com/ysanson/AdventOfCode/pkg/twod"
 	"golang.org/x/image/colornames"
 )
+
+// startDirections lists the directions in which a neighbour connects back to S.
+func startDirections(m twod.Map, start twod.Vector) []twod.Vector {
+	var directions []twod.Vector
+	for _, c := range []struct {
+		dir   twod.Vector
+		tiles string
+	}{{twod.UP, "|7F"}, {twod.DOWN, "|LJ"}, {twod.LEFT, "-LF"}, {twod.RIGHT, "-7J"}} {
+		if tile, ok := m[start+c.dir].(rune); ok && strings.ContainsRune(c.tiles, tile) {
+			directions = append(directions, c.dir)
+		}
+	}
+	return directions
+}
 
 func run(input string) (any, any) {
 	part1, part2 := 0, 0
@@ -21,7 +37,8 @@ func run(input string) (any, any) {
 	}
 
 	distance := make(twod.Map)
-	point := twod.NewPoint(start, twod.LEFT)
+	directions := startDirections(m, start)
+	point := twod.NewPoint(start, directions[0])
 	startTileCounter := 0
 loop:
 	for {
@@ -64,7 +81,7 @@ loop:
 			panic(fmt.Errorf("%v", point))
 		case 'S':
 			if startTileCounter == 1 {
-				point = twod.NewPoint(start, twod.DOWN)
+				point = twod.NewPoint(start, directions[1])
 			} else if startTileCounter == 2 {
 				break loop
 			}
@@ -91,7 +108,8 @@ loop:
 			newPos := twod.NewVector(pos.X(), y)
 			_, exist := distance[newPos]
 
-			if exist && (m[newPos] == '-' || m[newPos] == 'L' || m[newPos] == 'F') {
+			if exist && (m[newPos] == '-' || m[newPos] == 'L' || m[newPos] == 'F' ||
+				(m[newPos] == 'S' && slices.Contains(directions, twod.RIGHT))) {
 				crosses++
 			}
 		}
@@ -119,5 +137,5 @@ loop:
 }
 
 func main() {
-	execute.RunWithPixel(run, nil, Puzzle, true)
+	pixel.Run(run, nil, Puzzle, true)
 }

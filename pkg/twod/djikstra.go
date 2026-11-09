@@ -82,35 +82,63 @@ func (m Map) getNextStep(current Step, visited map[VisitedPoint]bool, H, W int, 
 	return possibleNext
 }
 
-func (m Map) GetUniqueTilesCount(from, to Vector, existingPath Path, scoreFunc func(curDir, nextDir Vector) int) int {
+// GetUniqueTilesCount returns how many tiles lie on at least one cheapest path.
+func (m Map) GetUniqueTilesCount(from, to Vector, scoreFunc func(curDir, nextDir Vector) int) int {
 	H, W := m.Height(), m.Width()
 	priorityQueue := pq.NewWith(func(a, b interface{}) int {
 		return a.(Step).score - b.(Step).score
 	})
-	priorityQueue.Enqueue(Step{from, RIGHT, 0, make(Path)})
-	visited := make(map[VisitedPoint]bool)
-	altPaths := make(map[Vector]bool)
+	priorityQueue.Enqueue(Step{coords: from, lastDir: RIGHT})
+	start := VisitedPoint{from, RIGHT}
+	best := map[VisitedPoint]int{start: 0}
+	previous := make(map[VisitedPoint][]VisitedPoint)
+	noneVisited := make(map[VisitedPoint]bool)
+
 	for !priorityQueue.Empty() {
 		element, _ := priorityQueue.Dequeue()
-		currentNode := element.(Step)
-		if score, ok := existingPath[currentNode.coords]; ok && score >= currentNode.score {
-			for point := range currentNode.path {
-				if _, ok := existingPath[point]; !ok {
-					altPaths[point] = true
-				}
+		current := element.(Step)
+		state := VisitedPoint{current.coords, current.lastDir}
+		if current.score > best[state] {
+			continue
+		}
+		for _, next := range m.getNextStep(current, noneVisited, H, W, scoreFunc) {
+			nextState := VisitedPoint{next.coords, next.lastDir}
+			known, seen := best[nextState]
+			switch {
+			case !seen || next.score < known:
+				best[nextState] = next.score
+				previous[nextState] = []VisitedPoint{state}
+				priorityQueue.Enqueue(next)
+			case next.score == known:
+				previous[nextState] = append(previous[nextState], state)
 			}
 		}
-		if _, ok := visited[VisitedPoint{currentNode.coords, currentNode.lastDir}]; ok {
-			continue
-		}
-		currentNode.path[currentNode.coords] = currentNode.score
-		if currentNode.coords == to {
-			continue
-		}
-		for _, n := range m.getNextStep(currentNode, visited, H, W, scoreFunc) {
-			priorityQueue.Enqueue(n)
-		}
-		visited[VisitedPoint{currentNode.coords, currentNode.lastDir}] = true
 	}
-	return len(existingPath) + len(altPaths)
+
+	var ends []VisitedPoint
+	lowest := -1
+	for state, score := range best {
+		if state.coords != to {
+			continue
+		}
+		if lowest == -1 || score < lowest {
+			lowest, ends = score, nil
+		}
+		if score == lowest {
+			ends = append(ends, state)
+		}
+	}
+
+	tiles := make(map[Vector]bool)
+	seen := make(map[VisitedPoint]bool)
+	for len(ends) > 0 {
+		state := ends[len(ends)-1]
+		ends = ends[:len(ends)-1]
+		if !seen[state] {
+			seen[state] = true
+			tiles[state.coords] = true
+			ends = append(ends, previous[state]...)
+		}
+	}
+	return len(tiles)
 }

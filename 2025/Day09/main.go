@@ -62,7 +62,8 @@ func run(input string) (any, any) {
 	slices.SortFunc(pairs, sortDescending)
 
 	lines := make([]Rect, 0)
-	for _, line := range pkg.AdjacentPairs(points) {
+	edges := append(pkg.AdjacentPairs(points), [2]Point{points[len(points)-1], points[0]})
+	for _, line := range edges {
 		lines = append(lines, rectFromPoints(line[0], line[1]))
 	}
 	slices.SortFunc(lines, sortDescending)
@@ -86,5 +87,5 @@ func run(input string) (any, any) {
 }
 
 func main() {
-	execute.Run(run, nil, Puzzle, true)
+	execute.Run(run, Tests, Puzzle, true)
 }

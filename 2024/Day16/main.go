@@ -16,8 +16,8 @@ func run(input string) (interface{}, interface{}) {
 	plan := twod.NewMapFromInput(input)
 	start, end := plan.Find('S')[0], plan.Find('E')[0]
 
-	score, path := plan.Djikstra(start, end, computeScore)
-	uniqueTiles := plan.GetUniqueTilesCount(start, end, path, computeScore)
+	score, _ := plan.Djikstra(start, end, computeScore)
+	uniqueTiles := plan.GetUniqueTilesCount(start, end, computeScore)
 
 	return score, uniqueTiles
 }

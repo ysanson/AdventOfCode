@@ -1,11 +1,13 @@
-
 package main
 
-import (
-	"os"
-	"testing"
-)
+import "testing"
 
-func TestMain(m *testing.M) {
-	os.Exit(m.Run())
+func TestRun(t *testing.T) {
+	Tests.RunT(t, run)
+}
+
+func BenchmarkRun(b *testing.B) {
+	for b.Loop() {
+		run(Puzzle)
+	}
 }

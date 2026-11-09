@@ -3,7 +3,6 @@ package main
 import (
 	"strings"
 
-	"github.com/juliangruber/go-intersect"
 	"github.com/ysanson/AdventOfCode/pkg"
 	"github.com/ysanson/AdventOfCode/pkg/execute"
 )
@@ -79,8 +78,8 @@ func calculate(galaxies []Coord, emptyLines []int, emptyCols []int, expansionFac
 			second := galaxies[i]
 			x1, x2 := pkg.Min(first.x, second.x), pkg.Max(first.x, second.x)
 			y1, y2 := pkg.Min(first.y, second.y), pkg.Max(first.y, second.y)
-			sum += (x2 - x1) + (len(intersect.Hash(emptyLines, generateRange(x1, x2))) * expansionFactor)
-			sum += (y2 - y1) + (len(intersect.Hash(emptyCols, generateRange(y1, y2))) * expansionFactor)
+			sum += (x2 - x1) + (len(pkg.IntersectHash(emptyLines, generateRange(x1, x2))) * expansionFactor)
+			sum += (y2 - y1) + (len(pkg.IntersectHash(emptyCols, generateRange(y1, y2))) * expansionFactor)
 		}
 	}
 	return sum

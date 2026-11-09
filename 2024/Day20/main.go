@@ -21,7 +21,7 @@ func checkWalls(raceMap twod.Map, path []*twod.P) (cheats int) {
 }
 
 func checkLongCheat(path []*twod.P) (cheats int) {
-	for i, p1 := range path[:len(path)-100] {
+	for i, p1 := range path[:max(len(path)-100, 0)] {
 		for j, p2 := range path[100+i:] {
 			if d := p2.Pos.ManhatanDistance(p1.Pos); d <= 20 && d <= j {
 				cheats++
